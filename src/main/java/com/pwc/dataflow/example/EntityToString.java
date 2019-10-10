@@ -16,15 +16,18 @@ public class EntityToString extends DoFn<Entity, String> {
         Map<String, Value> propMap = payment.getPropertiesMap();
 
         // Grab all relevant fields
-        String paymentId = propMap.get("id").getKeyValue().toString();
-        String paymentName = propMap.get("payment_name").getStringValue();
+        String paymentId = propMap.get("payment_id").getKeyValue().toString();
+        String paymentNumber = propMap.get("payment_number").getStringValue();
         String accountId = propMap.get("account_id").getStringValue();
         String accountNumber = propMap.get("account_number").getStringValue();
         String accountName = propMap.get("account_name").getStringValue();
         Double amount = propMap.get("amount").getDoubleValue();
         String effectiveDate = propMap.get("effective_date").getTimestampValue().toString();
 
-        out.output("Payment: " + paymentId + "paymentName:" +paymentName + "amount" + amount + "Effective Date: " + effectiveDate);
+        String jsonString = String.format("{payment_id:%s,payment_number:%s,account_id:%s,account_number:%s,account_name:%s,amount:%.4f,effective_date:%s}",
+                paymentId,paymentNumber,accountId,accountNumber,accountName,amount,effectiveDate);
+
+        out.output(jsonString);
 
 
 

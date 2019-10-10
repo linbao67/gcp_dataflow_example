@@ -3,9 +3,9 @@ package com.pwc.dataflow.example;
 import com.google.datastore.v1.Query;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions;
-import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.io.gcp.datastore.DatastoreIO;
 import org.apache.beam.sdk.io.gcp.datastore.DatastoreV1;
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubIO;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
@@ -14,17 +14,17 @@ import org.apache.beam.sdk.transforms.ParDo;
 
 ;
 
-public class JavaDemo1 {
+public class DataStoreToPubSub {
     private static final String PAYMENT_KIND = "Payment";
 
-    public interface DemoOptions extends PipelineOptions {
+    public interface DataStoreToPubSubOptions extends PipelineOptions {
 
         /** Set this required option to specify where to write the output. */
-        @Description("Path of the file to write to")
+        @Description("Pubsub topic to write data to")
         @Required
-        String getOutput();
+        String getPubsubWriteTopic();
 
-        void setOutput(String value);
+        void setPubsubWriteTopic(String value);
     }
 
 
@@ -42,7 +42,7 @@ public class JavaDemo1 {
 
 
 
-    static void extractDatastore(DemoOptions options) {
+    static void datastoreToPubsub(DataStoreToPubSubOptions options) {
 
         Query.Builder query = Query.newBuilder();
         query.addKindBuilder().setName(PAYMENT_KIND);
@@ -59,7 +59,8 @@ public class JavaDemo1 {
         pipeline.apply("ReadLines",
                 DatastoreIO.v1().read().withProjectId(options.as(GcpOptions.class).getProject()).withLiteralGqlQuery("SELECT * FROM Payment"))
                 .apply("EntityToString", ParDo.of(new EntityToString()))
-                .apply("write ", TextIO.write().to(options.getOutput()));
+                .apply(PubsubIO.writeStrings()
+                        .to(options.getPubsubWriteTopic()));;
 
 
         pipeline.run().waitUntilFinish();
@@ -67,10 +68,10 @@ public class JavaDemo1 {
 
 
     public static void main(String[] args) {
-        DemoOptions options =
-                PipelineOptionsFactory.fromArgs(args).withValidation().as(DemoOptions.class);
+        DataStoreToPubSubOptions options =
+                PipelineOptionsFactory.fromArgs(args).withValidation().as(DataStoreToPubSubOptions.class);
 
-        extractDatastore(options);
+        datastoreToPubsub(options);
     }
 
 
